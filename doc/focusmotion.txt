@@ -1,0 +1,200 @@
+*focusmotion.txt*            Context-dependent motions              *focusmotion*
+
+                              focusmotion MANUAL
+
+1. About focusmotion                               |focusmotion-about|
+2. Quick Start                                     |focusmotion-quickstart|
+3. Key Mappings and Commands                       |focusmotion-keymappings|
+                                                   |focusmotion-commands|
+4. Options                                         |focusmotion-options|
+5. Changelog                                       |focusmotion-changelog|
+6. Contribute                                      |focusmotion-contribute|
+7. License                                         |focusmotion-license|
+
+=============================================================================
+1. ABOUT FOCUSMOTION ~
+                                                            *focusmotion-about*
+
+Vim users like to move around with `h`/`j`/`k`/`l`.
+
+The idea of focusmotion is to have paragraph-wise, indent-wise, line-wise and
+word-wise motions with the usual `h`/`j`/`k`/`l` keys. The cursor position defines
+the current type of motion eg. at the very beginning of a paragraph, motions
+will be paragraph-wise, and at the first char of a word, motions will be
+word-wise.
+
+To change the type of motion, you must _focus_ on a new context, eg.
+move into a paragraph to switch from paragraph-wise to indent-wise motions.
+Again, there is no mode per se, only the cursor position is used to decide
+the current type of motion.
+
+To reduce risks of confusion, `j`/`k` always move line-wise, like their original
+counterparts (sticking to first and last non-blank of the line, though).
+When not inside a line, that is, not beyond the first non-blank, `h`/`l` work as
+alternate vertical motions, going to the beginning or end of blocks or
+paragraphs. On a blank line, they move to the previous/next blank line.
+In that context, think of `j`/`k` as one-line down/up and `h`/`l` as multiline
+motions (Meta down/up, if you want). Eg. (`_` is the cursor position):
+>
+  1| _oo bar baz               1| foo bar baz               1| foo bar baz  
+  2| quux                      2| quux                      2| quux         
+  3| spam eggs       ===>      3| _pam eggs       ===>      3| spam eggs    
+  4|               (press l)   4|               (press l)   4|              
+  5| lorem ipsum               5| lorem ipsum               5| _orem ipsum  
+<
+>
+  1| for(var i=1;i<100;i++,msg=""){        1| for(var i=1;i<100;i++,msg=""){ 
+  2|   _/ Tests                            2|   // Tests                     
+  3|   if (!(i%3)) msg+="Fizz";            3|   if (!(i%3)) msg+="Fizz";     
+  4|   if (!(i%5)) msg+="Buzz";            4|   _f (!(i%5)) msg+="Buzz";     
+  5|                               ====>   5|                                
+  6|   // Print                     (l)    6|   // Print                     
+  7|   console.log(msg || i);              7|   console.log(msg || i);       
+  8| }                                     8| }                              
+<
+In order to "focus" on a line, it is necessary to move past the first
+non-blank; `h`/`j`/`k`/`l` are already bound to vertical motions, so a fifth key is
+used, which default to `s`. Of course, any other motion can be used eg. `w` or
+`<Right>`. Once inside a line, motions are word-wise when the cursor is at the
+beginning of a word. There are two necessary exceptions: when on the second
+char of a line, and when on the last non-blank (both locations keep a
+word-wise context).
+>
+  1| _oo bar baz               1| f_o bar baz               1| foo _ar baz  
+  2| quux                      2| quux                      2| quux         
+  3| spam eggs       ===>      3| spam eggs       ===>      3| spam eggs    
+  4|               (press s)   4|               (press l)   4|              
+  5| lorem ipsum               5| lorem ipsum               5| lorem ipsum  
+<
+>
+  1| foo _ar baz               1| foo bar _az               1| foo _ar baz  
+  2| quux                      2| quux                      2| quux         
+  3| spam eggs       ===>      3| spam eggs       ===>      3| spam eggs    
+  4|               (press l)   4|               (press h)   4|              
+  5| lorem ipsum               5| lorem ipsum               5| lorem ipsum  
+<
+>
+  1| foo bar _az               1| foo bar ba_               1| foo _ar baz  
+  2| quux                      2| quux                      2| quux         
+  3| spam eggs       ===>      3| spam eggs       ===>      3| spam eggs    
+  4|               (press l)   4|               (press h)   4|              
+  5| lorem ipsum               5| lorem ipsum               5| lorem ipsum  
+<
+When inside a line, `h`/`l` motions have been made to stick to word-wise or
+char-wise motions; in other words, they cannot move to the first non-blank of
+the line. To do so, you can use the `s` key when on the second char of the
+first word ie. the second non-blank of the line.
+Think of `s` as the "enter/exit" key.
+>
+  1| f_o bar baz               1| _oo bar baz               1| f_o bar baz  
+  2| quux                      2| quux                      2| quux         
+  3| spam eggs       ===>      3| spam eggs       ===>      3| spam eggs    
+  4|               (press s)   4|               (press s)   4|              
+  5| lorem ipsum               5| lorem ipsum               5| lorem ipsum  
+<
+To switch from word-wise to char-wise motions, the same principle applies:
+you must enter into the word, ie. move past the first char. Again, the `s` key
+can be used, along with other standard motions (eg. `<Right>`, `e`).
+>
+  1| foo bar baz               1| foo bar baz               1| foo bar baz  
+  2| quux                      2| quux                      2| quux         
+  3| spam eggs       ===>      3| spam eggs       ===>      3| spam eggs    
+  4|               (press s)   4|               (press l)   4|              
+  5| lorem _psum               5| lorem i_sum               5| lorem ip_um  
+<
+Two exceptions: the second char of the first word is already used for
+word-wise motions within the line, so you must move past it to start
+char-wise motions. Here, `s` cannot be used (since it is already used to exit
+word-wise motions by moving to the first char of the line), but you can use `h` 
+which will "bounce" to the third char. The same mechanism also works for the
+last char of the last word: `l` will "bounce" to the before last char, thus
+enabling char-wise motions.
+>
+  1| foo bar baz               1| foo bar baz               1| foo bar baz  
+  2| quux                      2| quux                      2| quux         
+  3| spam eggs       ===>      3| spam eggs       ===>      3| spam eggs    
+  4|               (press h)   4|               (press l)   4|              
+  5| l_rem ipsum               5| lo_em ipsum               5| lor_m ipsum  
+<
+>
+  1| foo bar baz               1| foo bar baz               1| foo bar baz  
+  2| quux                      2| quux                      2| quux         
+  3| spam eggs       ===>      3| spam eggs       ===>      3| spam eggs    
+  4|               (press l)   4|               (press h)   4|              
+  5| lorem ipsu_               5| lo_em ips_m               5| lorem ip_um  
+<
+Finally, typing `s` on a blank line will activate/deactivate focusmotion, in
+case it gets in the way for some tasks.
+
+=============================================================================
+2. QUICK START ~
+                                                       *focusmotion-quickstart*
+
+1. Install the plugin Eg. with Pathogen:
+>
+   `cd ~/.vim/bundle && git clone https://github.com/fcpg/vim-focusmotion`
+<
+2. Move with `h`/`j`/`k`/`l`/`s` as explained above.
+
+=============================================================================
+3. KEY MAPPINGS AND COMMANDS ~
+                                                      *focusmotion-keymappings*
+
+While focusmotion is active:
+
+- h/l
+  Context-specific motion.
+
+- j/k
+  Down/up line-wise motion, sticking to beginning/end of line when
+  appropriate.
+
+- s
+  Enter/exit current focus.
+
+                                                         *focusmotion-commands*
+
+*FocusMotionToggle*
+Arg: (0|1|2) unset/set/toggle? (default: toggle)
+Arg: (0|1) silent?           (default: no)
+Activate/deactivate focusmotion, for current buffer.
+
+*FocusMotionGlobalToggle*
+Arg: (0|1|2) unset/set/toggle? (default: toggle)
+Arg: (0|1) silent?           (default: no)
+Globally activate/deactivate focusmotion.
+
+=============================================================================
+4. OPTIONS ~
+                                                          *focusmotion-options*
+
+*g:focusmotion_nomaps*                                 default: `unset`
+Disable standard maps on `h`/`j`/`k`/`l`/`s`. Define you own maps using:
+
+    <plug>FocusMotion_left
+    <plug>FocusMotion_right
+    <plug>FocusMotion_down
+    <plug>FocusMotion_up
+    <plug>FocusMotion_enterexit
+
+
+=============================================================================
+5. CHANGELOG ~
+                                                        *focusmotion-changelog*
+
+[1.0] - 2016-09-21
+  - Initial release
+
+=============================================================================
+6. CONTRIBUTE ~
+                                                       *focusmotion-contribute*
+
+Contribute on [Github](https://github.com/fcpg/vim-focusmotion)
+
+=============================================================================
+7. LICENSE ~
+                                                          *focusmotion-license*
+
+[Attribution-ShareAlike 4.0 Int.](https://creativecommons.org/licenses/by-sa/4.0/)
+
+ vim: set expandtab sts=2 ts=2 sw=2 tw=78 ft=help norl:
