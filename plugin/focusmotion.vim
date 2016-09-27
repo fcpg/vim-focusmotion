@@ -4,6 +4,7 @@
 
 " Guard {{{1
 if exists("g:loaded_focusmotion") || &cp || v:version < 700
+      \ || !exists('*getcurpos') 
   finish
 endif
 let g:loaded_focusmotion = 1
